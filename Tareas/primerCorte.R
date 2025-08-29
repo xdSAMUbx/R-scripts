@@ -1,46 +1,72 @@
-setwd("D:/Universidad/8 Semestre/Econometria/scripts/Tareas")
-
+#######################
+# Carpeta de trabajo #
 ######################
-# Funciones Externas #
-######################
+setwd("D:/Universidad/8 Semestre/Econometria/scripts/Tareas") # PC
+setwd("D:/programacion/R-scripts/Tareas") # Portatil
+#############################
+# Funciones Complementarias #
+#############################
 source("funciones.R")
-#############################
-#     Ejercicios Cap 2      #
-#############################
+##############
+# Capítulo 2 #
+##############
 
-# Matrices fila y columnas en minusculas
-a <- as.matrix(c(1:3)); b <- as.matrix(c(4:6))
+# Vectores
+x <- c(1:5)
+# Matrices
+x <- as.matrix(matrix(x,5,1,TRUE))
+# Transpuesta 
+tx <- t(x)
+# Suma matricial
+x <- as.matrix(c(1,2)); y <- as.matrix(c(3,4))
+z = x + y
+# Producto matricial
+z = x%*%t(y)
+# Matrices Particionadas
+A <- as.matrix(matrix(c(1:9),3,3,TRUE))
+B <- as.matrix(matrix(c(1:9),3,3,TRUE))
 
-# Matrices en mayusculas
-A <- as.matrix(matrix(c(1:25),5,5,TRUE))
-B <- as.matrix(matrix(c(26:50),5,5,TRUE))
+P <-cbind(A,B) # Añade a la derecha
+P <-rbind(A,B) # Añade debajo
+P <- cbind(rbind(A,B), rbind(B,A)) # Matriz como las de Geoestadística (Compuesta)
 
-# Operaciones básicas de matrices
-c <- a + b
-c <- a - b
+# Matrices diagonales
+diag(rep(1,3)) # Permite repetir elementos x cantidad de veces
 
-# Multiplicación de matrices
-c <- a%*%t(b)
+# Ejercicios
 
-# Funciones
-suma <- function(x,y){return (x+y)}
-suma(1,2)
-
-prodPoint(a,b)
-
-
-#Ejercicio 1 - Capitulo 2
-a <- as.matrix(c(1:3)); b <- as.matrix(c(4:6)); u <- as.matrix(c(3:1)); 
+# 1
+a <- as.matrix(c(1:3)); b <- as.matrix(c(4:6)); u <- as.matrix(c(3:1))
 v <- as.matrix(c(6:4)); w <- as.matrix(matrix(c(7:9),1,3,TRUE))
 
 a + b
 v - a 
-t(w) + b
+t(w) + b 
 3*u
 t(w) - a
 v/3
 a%*%t(b)
 b%*%t(a)
 
-# Ejercicio 2 
+# 2
 x = as.matrix(c(2,2,-3)); y = as.matrix(c(1,-2,1))
+vecP1 <- list(a,b,u,v)
+for(i in seq_along(vecP1))
+{
+  if(is.ort(x,vecP1[[i]]))
+    {
+      print(i)
+      break
+    }
+}
+for(i in seq_along(vecP1))
+{
+  if(is.ort(y,vecP1[[i]]))
+  {
+    print(i)
+    break
+  }
+}
+
+
+
