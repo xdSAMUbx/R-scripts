@@ -68,5 +68,23 @@ for(i in seq_along(vecP1))
   }
 }
 
+# 3
+A = as.matrix(matrix(c(1:6),2,3,T)); B = as.matrix(matrix(c(1:6),3,2,T))
+U = as.matrix(matrix(c(1:4),2,2,T)); V = as.matrix(matrix(c(5:8),2,2,T))
+W = as.matrix(matrix(c(2,2,3,5),2,2,T)); Z = as.matrix(matrix(c(3,2,3,6),2,2,T))
 
+#3.a
+A%*%B
+t(A%*%B)
+B%*%A
+# Error t(a)%*%A
+# Error t(a)%*%(A%*%a)
+V%*%diag(U)
+diag(t(B%*%A))
+U%*%V%*%W%*%Z
+diag(diag(U%*%V))
+diag(diag(U))%*%diag(diag(V))
 
+##############
+# Capítulo 3 #
+##############
