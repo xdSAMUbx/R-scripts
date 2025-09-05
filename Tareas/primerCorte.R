@@ -5,7 +5,6 @@ setwd("D:/Universidad/8 Semestre/Econometria/scripts/Tareas")
 ######################
 source("funciones.R")
 #############################
-#     Ejercicios Cap 2      #
 #############################
 
 # Matrices fila y columnas en minusculas
@@ -41,6 +40,10 @@ t(w) - a
 v/3
 a%*%t(b)
 b%*%t(a)
+listM <- list(a,b,u,v,w)
 
 # Ejercicio 2 
 x = as.matrix(c(2,2,-3)); y = as.matrix(c(1,-2,1))
+for (i in listM){
+  size(i)
+}
