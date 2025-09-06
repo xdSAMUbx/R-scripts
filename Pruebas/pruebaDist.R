@@ -15,7 +15,7 @@ colnames(dfData)[3] <- "z"
 
 d <- Dist(as.matrix(dfData[, c("x", "y")]), method = "euclidean")
 
-m <- sqrt(d**2 + 0.2)
+m <- sqrt(d^2 + 0.2^2)
 f <- matrix(rep(1,nrow(m)))
 b <- rbind(as.matrix(dfData[,c("z")]),0)
 A <- cbind(rbind(m,t(f)),rbind(f,0)) 
