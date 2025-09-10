@@ -97,5 +97,5 @@ rbf <- function(formula, data, newData, eta, rho, func) {
   pred <- as.numeric(crossprod(omega, phi0)) + v
 }
 
-ptsSample$pred <- rbf("z~x+y", dfData, ptsSample, 1e-10, 1e-10, "exp")
+ptsSample$pred <- rbf("z~x+y", dfData, ptsSample, 1, 1, "im")
 plot(ptsSample)
