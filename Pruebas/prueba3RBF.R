@@ -8,6 +8,7 @@ library(dplyr)
 
 setwd("D:/programacion/R-scripts/Pruebas") # Portatil
 setwd("D:/Universidad/8 Semestre/Econometria/R-scripts/Pruebas") # PC
+setwd("/home/xdsamubx/Documents/R-scripts/Pruebas")
 data <- "data/ariari.rda"
 data2 <- "data/ariprec.rda"
 load(data)
@@ -30,8 +31,9 @@ getFormula <- function(formula, data, na.action = na.action) {
   z <- mf[[1L]]
   X <- as.matrix(mf[, -1, drop = FALSE])
 
-  if (!all(vapply(as.data.frame(X), is.numeric, logical(1L))))
+  if (!all(vapply(as.data.frame(X), is.numeric, logical(1L)))) {
     stop("Los predictores deben ser numéricos.")
+  }
 
   list(z = z, x = X)
 }
@@ -77,7 +79,8 @@ cholSolv <- function(K, z) {
 }
 
 qrSolv <- function(K, z) {
-  f <- matrix(1.0, nrow = n, ncol = 1L)
+  n <- nrow(K)
+  f <- matrix(1.0, nrow(K), ncol = 1L)
   A <- matrix(0.0, n + 1L, n + 1L)
   A[1:n, 1:n] <- K
   A[1:n, n + 1L] <- f
@@ -123,7 +126,9 @@ rbf <- function(formula, data, newData, eta, rho, func) {
   pred <- drop(crossprod(omega, K0) + as.numeric(v))
 }
 
-
-pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, "crs")
+time <- system.time({
+  pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, "crs")
+})
+print(time)
 ptsSample$pred <- pred
 plot(ptsSample)
