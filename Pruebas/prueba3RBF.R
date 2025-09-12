@@ -13,7 +13,7 @@ data <- "data/ariari.rda"
 data2 <- "data/ariprec.rda"
 load(data)
 load(data2)
-ptsSample <- spsample(ariari, 50000, type = "regular")
+ptsSample <- spsample(ariari, 1000, type = "regular")
 gridded(ptsSample) <- TRUE
 dfData <- ariprec %>% select("x", "y", "PRECI_TOT")
 colnames(dfData)[3] <- "z"
@@ -115,10 +115,12 @@ rbf <- function(formula, data, newData, eta, rho, func) {
 
   ch <- tryCatch(chol(K), error = function(e) NULL)
   if (!is.null(ch)) {
+    cat("Solucionando con Cholesky")
     res <- cholSolv(K, z)
     omega <- res$omega
     v <- res$v
   } else {
+    cat("Solucionando con QR")
     res <- qrSolv(K, z)
     omega <- res$omega
     v <- res$v
@@ -127,7 +129,7 @@ rbf <- function(formula, data, newData, eta, rho, func) {
 }
 
 time <- system.time({
-  pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, "crs")
+  pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, "")
 })
 print(time)
 ptsSample$pred <- pred
