@@ -76,6 +76,20 @@ cholSolv <- function(K, z) {
   list(omega = omega, v = v)
 }
 
+qrSolv <- function(K, z) {
+  f <- matrix(1.0, nrow = n, ncol = 1L)
+  A <- matrix(0.0, n + 1L, n + 1L)
+  A[1:n, 1:n] <- K
+  A[1:n, n + 1L] <- f
+  A[n + 1L, 1:n] <- t(f)
+  b <- c(z, 0.0)
+  qa <- qr(A, LAPACK = T)
+  coef <- qr.coef(qa, b)
+  omega <- coef[seq_len(n)]
+  v <- coef[n + 1L]
+  return(list(omega = omega, v = v))
+}
+
 rbf <- function(formula, data, newData, eta, rho, func) {
   stopifnot(is.numeric(rho), is.data.frame(data), inherits(newData, "SpatialPixels"))
 
@@ -98,27 +112,17 @@ rbf <- function(formula, data, newData, eta, rho, func) {
 
   ch <- tryCatch(chol(K), error = function(e) NULL)
   if (!is.null(ch)) {
-    res <-
-      res <- cholSolv(K, z)
+    res <- cholSolv(K, z)
     omega <- res$omega
     v <- res$v
-
-    pred <- drop(crossprod(omega, K0) + as.numeric(v))
   } else {
-    f <- matrix(1.0, nrow = n, ncol = 1L)
-    A <- matrix(0.0, n + 1L, n + 1L)
-    A[1:n, 1:n] <- K
-    A[1:n, n + 1L] <- f
-    A[n + 1L, 1:n] <- t(f)
-    b <- c(z, 0.0)
-    qa <- qr(A, LAPACK = T)
-    coef <- qr.coef(qa, b)
-    omega <- coef[seq_len(n)]
-    v <- coef[n + 1L]
-    pred <- as.numeric(crossprod(omega, K0) + v)
+    res <- qrSolv(K, z)
+    omega <- res$omega
+    v <- res$v
   }
-  return(pred = pred)
+  pred <- drop(crossprod(omega, K0) + as.numeric(v))
 }
+
 
 pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, "crs")
 ptsSample$pred <- pred
