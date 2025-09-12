@@ -9,7 +9,7 @@ data <- "data/ariari.rda"
 data2 <- "data/ariprec.rda"
 load(data)
 load(data2)
-ptsSample <- spsample(ariari, 100, type = "regular")
+ptsSample <- spsample(ariari, 1000, type = "regular")
 gridded(ptsSample) <- TRUE
 dfData <- ariprec %>% select("x", "y", "PRECI_TOT")
 colnames(dfData)[3] <- "z"
@@ -26,14 +26,21 @@ im0 <- (sqrt(phiI0^2 + eta^2))^(-1)
 
 # Calculando rho
 diag(im) <- diag(im) + rho
+cholIm <- chol(im)
+solveChol <- function(R, B) backsolve(R, forwardsolve(t(R), B))
 # Realizando el calculo vectorial
 f <- matrix(1.0, nrow(im))
+pru <- solveChol(cholIm, f)
+pruz <- solveChol(cholIm, z)
+den <- drop(crossprod(f, pru))
+v <- drop(crossprod(f, pruz) / den)
+omega <- pruz - pru * v
+ptsSample$pred <- drop(t(omega) %*% im0) + as.numeric(v)
+plot(ptsSample$pred)
 A <- matrix(0.0, nrow(im) + 1L, ncol(im) + 1L)
 A[1:nrow(im), 1:ncol(im)] <- im
 A[1:nrow(im), ncol(im) + 1L] <- f
 A[nrow(im) + 1L, 1:ncol(im)] <- t(f)
-A == t(A)
-kappa(A)
 z <- as.matrix(dfData[, c("z")])
 b <- c(z, 0.0)
 QA <- qr(A, LAPACK = TRUE)
@@ -44,22 +51,7 @@ for (i in 1:ncol(im0)) {
   print(pred)
 }
 
-sv  <- svd(A)
-sv  <- svd(A)
-tol <- max(dim(A)) * max(sv$d) * .Machine$double.eps   # tolerancia estándar
-dInv <- ifelse(sv$d > tol, 1 / sv$d, 0)
-
-# x = A^+ b = V diag(dInv) U^T b
-pond <- sv$v %*% (dInv * (t(sv$u) %*% b))
-omega <- pond[1:nrow(im)]
-v     <- pond[nrow(im) + 1L]
-
-# pred = t(omega) %*% im0 + v   (devuelve un vector de longitud m)
-pred_vec <- drop(crossprod(omega, im0)) + as.numeric(v)
-
-ptsSample$pred <- pred_vec
-
-ptsSample$pred <- pred
+tsSample$pred <- pred
 plot(ptsSample)
 if (nrow(phiI0) != nrow(dfData)) phiI0 <- t(phiI0)
 nData <- nrow(dfData)
