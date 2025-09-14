@@ -1,4 +1,4 @@
-# Prueba 3 de RBF
+# Prueba RBF Vecinos
 library(sf)
 library(sp)
 library(Rfast)
@@ -13,7 +13,7 @@ data <- "data/ariari.rda"
 data2 <- "data/ariprec.rda"
 load(data)
 load(data2)
-ptsSample <- spsample(ariari, 1000, type = "regular")
+ptsSample <- spsample(ariari, 10000, type = "regular")
 gridded(ptsSample) <- TRUE
 dfData <- ariprec %>% select("x", "y", "PRECI_TOT")
 colnames(dfData)[3] <- "z"
@@ -88,49 +88,57 @@ qrSolv <- function(K, z) {
   b <- c(z, 0.0)
   qa <- qr(A, LAPACK = T)
   coef <- qr.coef(qa, b)
-  omega <- coef[seq_len(n)]
-  v <- coef[n + 1L]
-  return(list(omega = omega, v = v))
+  return(list(omega = coef[seq_len(n)], v = coef[n + 1L]))
 }
 
-rbf <- function(formula, data, newData, eta, rho, func) {
+rbf <- function(formula, data, newData, eta, rho, n.neigh, func) {
   stopifnot(is.numeric(rho), is.data.frame(data), inherits(newData, "SpatialPixels"))
 
   # Obtiene la formula z~x+y
-  formula <- getFormula(formula, data)
-  z <- formula$z
-  coords <- formula$x
+  f <- getFormula(formula, data)
+  z <- as.numeric(f$z)
+  s <- as.matrix(f$x)
 
-  # Dependencia 1 Rfast (Calculo de distancias)
-  dMat <- as.matrix(Dist(coords, method = "euclidean"))
-  d0Mat <- as.matrix(dista(coords, coordinates(as(newData, "SpatialPoints"))))
-  n <- nrow(dMat)
-  nData <- nrow(data)
-  if (nrow(d0Mat) != nData) d0Mat <- t(d0Mat)
-
-  K <- pickRBF(func, dMat, eta) # Función kernel de las distancias de los datos
-  K0 <- pickRBF(func, d0Mat, eta) # Función kernel de los nuevos puntos
-  # ro mayor a 0
-  diag(K) <- diag(K) + rho
-
-  ch <- tryCatch(chol(K), error = function(e) NULL)
-  if (!is.null(ch)) {
-    cat("Solucionando con Cholesky")
-    res <- cholSolv(K, z)
-    omega <- res$omega
-    v <- res$v
+  if (n.neigh >= nrow(s) || n.neigh <= 0) stop("Error al colocar la cantidad de vecinos, verifique su información.")
+  if (inherits(newData, "SpatialPixels") || inherits(newData, "SpatialPoints")) {
+    s0 <- sp::coordinates(as(newData, "SpatialPoints"))
+  } else if (is.matrix(newData) && ncol(newData) >= 2L) {
+    s0 <- newData[, 1:2, drop = FALSE]
   } else {
-    cat("Solucionando con QR")
-    res <- qrSolv(K, z)
-    omega <- res$omega
-    v <- res$v
+    stop("newData debe ser SpatialPixels/SpatialPoints o matriz numérica (x,y).")
   }
-  pred <- drop(crossprod(omega, K0) + as.numeric(v))
+
+  n <- nrow(s)
+  m <- nrow(s0)
+
+  knn <- get.knnx(data = s, query = s0, k = n.neigh)
+  idxMat <- knn$nn.index
+  s0Mat <- knn$nn.dist
+
+  llave <- apply(idxMat, 1L, paste, collapse = ",")
+  grupos <- split(seq_len(m), llave)
+
+  pred <- numeric(m)
+
+  for (g in grupos) {
+    nIdx <- idxMat[g[1L], ]
+    sg <- s[nIdx, , drop = FALSE]
+    zg <- z[nIdx]
+    sGMat <- as.matrix(Dist(sg, method = "euclidean", parallel = TRUE))
+    K <- pickRBF(func, sGMat, eta)
+    diag(K) <- diag(K) + rho
+    s0GMat <- t(s0Mat[g, , drop = FALSE])
+    K0 <- pickRBF(func, s0GMat, eta)
+    if (tolower(func) %in% c("im", "gau", "exp")) {
+      res <- cholSolv(K, zg)
+    } else {
+      res <- qrSolv(K, zg)
+    }
+    pred[g] <- as.numeric(drop(crossprod(res$omega, K0) + as.numeric(res$v)))
+  }
+  pred
 }
 
 time <- system.time({
-  pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, "")
+  pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, 5, "im")
 })
-print(time)
-ptsSample$pred <- pred
-plot(ptsSample)
