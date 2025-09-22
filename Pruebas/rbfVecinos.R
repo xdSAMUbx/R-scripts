@@ -139,6 +139,6 @@ rbf <- function(formula, data, newData, eta, rho, n.neigh, func) {
   pred
 }
 
-time <- system.time({
-  pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, 5, "im")
-})
+pred <- rbf("z~x+y", dfData, ptsSample, 1e-7, 1e-8, 5, "im")
+ptsSample$pred <- pred
+plot(ptsSample)
