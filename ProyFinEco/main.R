@@ -33,6 +33,7 @@ statsDf <- round(as.data.frame(t(sapply(df, function(col) {
 print(xtable(statsDf), include.ronames = FALSE)
 
 # Densidad por 3 variables
+x11()
 plot(density(df$xPrec, na.rm = TRUE), main = "Densidad del Precio")
 plot(density(df$xCalGen, na.rm = TRUE), main = "Densidad de Calificación General")
 plot(density(df$xRes, na.rm = TRUE), main = "Densidad de Número de Reseñas")
@@ -54,9 +55,10 @@ summary(modPet <- lm(xPrec ~ xPet, data = df))
 summary(modCalGen <- lm(xPrec ~ xCalGen, data = df))
 summary(modLimp <- lm(xPrec ~ xLimp, data = df))
 summary(modRes <- lm(xPrec ~ xRes, data = df))
-modelos <- list(modHues, modHPriv, modBed, modBath, modCalGen, modLimp, modRes)
-stargazer(modelos, type = "latex")
-
+modelos1 <- list(modHues, modHPriv, modBed, modBath)
+modelos2 <- list(modCalGen, modLimp, modRes)
+stargazer(modelos1, type = "text")
+stargazer(modelos2, type = "latex")
 # Supuesto 1 - Residuos
 resid <- lapply(modelos, function(m) {
   r <- mean(residuals(m))

@@ -2,7 +2,13 @@
 setwd("D:/Universidad/8 Semestre/Econometria/R-scripts/Tareas")
 library("wooldridge")
 data(beveridge)
-View(beveridge)
+data(crime2)
+View(crime2)
+
+###########
+# PUNTO 1 #
+###########
+
 urate <- beveridge$urate
 vrate <- beveridge$vrate
 df <- data.frame(urate, vrate)
@@ -24,4 +30,26 @@ mean(residuals(mod3a))
 
 # PUNTO 1 - D
 new <- data.frame(vrate = 10.5)
-pred1 <- predict(object = lm(log10(urate) ~ 1 + log10(vrate)), new, interval = "predict", level = 0.98)
+pred1 <- predict(object = lm(urate ~ 1 + I(1 / vrate)), new, interval = "predict", level = 0.98)
+
+###########
+# PUNTO 2 #
+###########
+
+summary(mod1pt2 <- lm(lcrimes ~ unem + loffic + lpcinc + west + nrtheast + south + larea + pop, data = crime2))
+summary(mod2pt2 <- lm(lcrimes ~ officers + popden + crmrte + offarea + area, data = crime2))
+summary(mod3pt2 <- lm(lcrimes ~ loffic + west + south + larea, data = crime2))
+
+###########
+# PUNTO 3 #
+###########
+
+dx <- c(37, 38, 18, 50, 22, 55, 42, 29, 63, 13, 60, 62, 36)
+px <- c(7, 6, 10, 4, 9, 2, 8, 8, 2, 12, 3, 3, 6)
+pz <- c(5, 7, 3, 9, 3, 12, 5, 5, 18, 2, 9, 10, 5)
+pw <- c(7, 5, 13, 4, 11, 3, 8, 9, 3, 15, 5, 5, 6)
+i <- c(6, 8, 3, 18, 3, 21, 2, 19, 20, 6, 12, 5, 26)
+
+df2 <- data.frame(dx, px, pz, pw, i)
+
+summary(mod1pt3 <- lm(dx ~ px + pz + pw + i, data = df2))
