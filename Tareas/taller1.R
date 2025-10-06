@@ -21,7 +21,7 @@ summary(mod1a <- lm(urate ~ 1 + vrate, data = df))
 mean(residuals(mod1a))
 
 # PUNTO 1 - B
-summary(mod2a <- lm(log10(urate) ~ 1 + log10(vrate)))
+summary(mod2a <- lm(log(urate) ~ 1 + log(vrate)))
 mean(residuals(mod2a))
 
 # PUNTO 1 - C
@@ -40,6 +40,15 @@ summary(mod1pt2 <- lm(lcrimes ~ unem + loffic + lpcinc + west + nrtheast + south
 summary(mod2pt2 <- lm(lcrimes ~ officers + popden + crmrte + offarea + area, data = crime2))
 summary(mod3pt2 <- lm(lcrimes ~ loffic + west + south + larea, data = crime2))
 
+pred <- data.frame(
+  loffic = 6,
+  west = 1,
+  south = 1,
+  larea = 7.68
+)
+
+predict(mod3pt2, newdata = pred, interval = "prediction", level = 0.98)
+
 ###########
 # PUNTO 3 #
 ###########
@@ -51,5 +60,18 @@ pw <- c(7, 5, 13, 4, 11, 3, 8, 9, 3, 15, 5, 5, 6)
 i <- c(6, 8, 3, 18, 3, 21, 2, 19, 20, 6, 12, 5, 26)
 
 df2 <- data.frame(dx, px, pz, pw, i)
-
+X <- cbind(rep(1, 13), px, pz, pw, i)
+betas <- solve(crossprod(X, X)) %*% crossprod(X, dx)
 summary(mod1pt3 <- lm(dx ~ px + pz + pw + i, data = df2))
+summary(mod2pt3 <- lm(log(dx) ~ log(px) + log(pz) + log(pw) + log(i), data = df2))
+
+# Elasticidades
+medDx <- mean(dx)
+medPx <- mean(px)
+medPz <- mean(pz)
+medPw <- mean(pw)
+medI <- mean(i)
+e1 <- betas[[2]] * (medPx / medDx)
+e2 <- betas[[3]] * (medPz / medDx)
+e3 <- betas[[4]] * (medPw / medDx)
+e4 <- betas[[5]] * (medI / medDx)
