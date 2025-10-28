@@ -1,37 +1,27 @@
-source("genA.R")
+source("GenA.R")
 
-condition <- function(data,ref = NULL, Weigth = FALSE){
+corr<-function(data, ref = NULL, Weigth = FALSE){
+  # Para la función si data no es de tipo dataframe
   stopifnot(inherits(data,"data.frame"))
   
-  d <- as.numeric(data[,4])
+  # Si Weigth es TRUE calcula distancias ponderadas si no, identidad
   if (!(isTRUE(Weigth))){
     P <- diag(nrow(data))
   } else {
+    d <- as.numeric(data[,4])
     P <- diag(1/d)
   }
   
-  A <- genA(data, ref = ref )$A
-  
-  if(!(is.null(ref))){
-    mapaReferencias <- setNames(ref$h, ref$nom)
-    corr <- apply(data, 1, function(fila) {
-      if (fila[["ini"]] %in% names(mapaReferencias)) {
-        mapaReferencias[fila[["ini"]]]
-      } else if (fila[["fin"]] %in% names(mapaReferencias)) {
-        mapaReferencias[ fila[["fin"]] ]
-      } else {
-        0
-      }
-    })
-    data[,3] <- data[,3] + as.numeric(corr) 
-  }
-  
+  # Obtiene la matriz A y la B, para calcular B utiliza BA = 0
+  A <- genA(data, ref = ref)$IM
   B <- t(Null(A))
-  y <- matrix(as.numeric(data[,3]))
+  
+  L <- matrix(as.numeric(data[,3]))
   PI <- solve(P)
+  W <- B%*%L
   M <- B%*%PI%*%t(B)
-  W <- B%*%y
-  v <- PI%*%t(B)%*%solve(M)%*%W
-  Y <- y - v
-  return(list(B = B, P = P, W = W, M = M, v = v, Y = Y))
+  V <- PI%*%crossprod(B,solve(M))%*%B%*%L
+  L_Corregido = L - V
+  
+  list(B = B, P = P, L = L, M = M, W = W,V = V, L_Corregido = L_Corregido)
 }
