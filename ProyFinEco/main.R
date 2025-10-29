@@ -7,7 +7,7 @@ library("stargazer")
 
 # Rutas de acceso
 setwd("D:/Universidad/8 Semestre/Econometria/R-scripts/ProyFinEco")
-
+setwd("D:/programacion/R-scripts/ProyFinEco")
 # Rutas a la data
 data <- read.csv("data/database.csv", header = T, sep = ",")
 dfLoc <- as.data.frame(table(data$LOCALIDAD))
@@ -19,8 +19,10 @@ df <- data %>%
   select(-c(LOCALIDAD, ID, LATITUD, LONGITUD, LINK)) %>%
   mutate(across(everything(), ~ as.numeric(gsub(",", "", .))))
 
-df <- setNames(df, c("xPrec", "xHues", "xHPriv", "xBed", "xBath", "xPet", "xCalGen", "xLimp",
-  "xRes", "xProp", "xLav", "xEntre", "xInter", "xUten", "xEsta"))
+df <- setNames(df, c(
+  "xPrec", "xHues", "xHPriv", "xBed", "xBath", "xPet", "xCalGen", "xLimp",
+  "xRes", "xProp", "xLav", "xEntre", "xInter", "xUten", "xEsta"
+))
 
 #########################
 # Analisis Exploratorio #
@@ -63,6 +65,6 @@ stargazer(modelos2, type = "latex")
 resid <- lapply(modelos, function(m) {
   r <- mean(residuals(m))
   r[abs(r) < 1e-10] <- 0
-  return (r)
+  return(r)
 })
 resid
