@@ -1,6 +1,7 @@
 library(tidyr)
 library(nortest)
 library(lmtest)
+library(olsrr)
 
 setwd("G:\\Otros ordenadores\\Mi PC\\Universidad\\8 Semestre\\Econometria\\R-scripts\\Tareas")
 
@@ -45,12 +46,10 @@ par(op)
 summary(mod1 <- lm(Ozone ~ Solar.R + Wind + Temp, data = df, na.action = na.omit))
 resmod1 <- residuals(mod1)
 sum(resmod1)
+# Normalidad
 shapiro.test(resmod1)
 lillie.test(resmod1)
-
+# Heterocedasticidad
 bptest(Ozone ~ Solar.R + Wind + Temp, data = df)
-
-acf(resmod1)
-ols_plot_resid_fit(mod1)
-ols_test_score(mod1)
-dwtest(Ozone ~ Solar.R + Wind + Temp, data = df)
+# Autocorrelación
+dwtest(Ozone ~ Solar.R + Wind + Temp,data = df)
