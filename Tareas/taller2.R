@@ -130,11 +130,25 @@ vif(mod2T2)
 
 data2 <- "G:\\Otros ordenadores\\Mi PC\\Universidad\\8 Semestre\\Econometria\\Taller2\\data7-24.csv"
 df2 <- read.csv(data2)
+# a
 summary(mod2 <- lm(salepric ~ sqft + bedrms + baths + garage + age + city, data = df2))
-plot(df2$sqft,residuals(mod2))
-plot(residuals(mod2))
+
+# b
+plot(residuals(mod2), main = "Residuos vs Orden Observación", ylab = "Residuos",
+     xlab = "Observaciones", pch = 21, cex = 1, col="black", bg = "red")
+abline(h = 0, lwd=2)
+grid()
+
+plot(df2$sqft,residuals(mod2), main = "Residuos vs Área (sqft)", ylab = "Residuos",
+     xlab = "Área (sqft)", pch=21, cex=1, col="black", bg = "darkblue")
+abline(h=0, lwd=2, col="green")
+grid()
+
+# c
 bptest(mod2)
 white(mod2)
+
+# D
 df2$e2 <- residuals(mod2)^2
 summary(mod22 <- lm(e2 ~ sqft, data = df2))
 df2$sigma2_est <- pmax(fitted(mod22),1e-6)
@@ -142,6 +156,8 @@ w <-  1/df2$sigma2_est
 w_2 <- 1/df2$sqft^2
 summary(mod23 <- lm(salepric ~ sqft + bedrms + baths + garage + age + city, 
                     data = df2, weights = w))
+
+# E
 summary(mod24 <- gls(salepric ~ sqft + bedrms + baths + garage + age + city, 
     data = df2, weights = varFixed(~ w_2)))
 bptest(mod24)
