@@ -161,3 +161,6 @@ summary(mod23 <- lm(salepric ~ sqft + bedrms + baths + garage + age + city,
 summary(mod24 <- gls(salepric ~ sqft + bedrms + baths + garage + age + city, 
     data = df2, weights = varFixed(~ w_2)))
 bptest(mod24)
+
+
+stargazer(mod2, type="text")
