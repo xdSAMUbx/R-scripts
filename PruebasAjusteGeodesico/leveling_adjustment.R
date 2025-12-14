@@ -1,28 +1,23 @@
-source("gen_basic_matrix.R")
-
 # Función que permite hacer el ajuste a traves del modelo de gauss - markov
-leveling_adjust <- function(data, reference=NULL, weight=FALSE, 
-                            model=c("gauss-markov","condition"),
-                            sol=c("LSS","RLSS","LSS-DCR","RLSS-DCR")){
+leveling_adjust <- function(data, reference = NULL, weight = FALSE,
+                            sparse = TRUE,
+                            model=c("GM","CE"),
+                            solution=c("LSS","RLSS","LSS-DCR","RLSS-DCR")){
   
-  # 1) Verifica que la información este en data.frame
+  # Carga los paquetes para realizar la solución
+  source("gen_basic_matrix.R")
+  source("gen_matrix_weight.R")
+  
+  # Realiza verificaciones antes de iniciar el código
   stopifnot(inherits(data,"data.frame"))
   
   if (!is.null(reference)){
     stopifnot(inherits(reference, "data.frame"))
   }
   
-  # 2) Genera la matriz de pesos según si esta en km, millas o no hay
-  # Esto para obtenerla en terminos de metros, pies o la matriz identidad
-  if (!(isTRUE(weight))){
-    W <- diag(nrow(data))
-  } else {
-    d <- as.numeric(data[,4]) # La distancia siempre en la cuarta columna
-    W <- diag(1/d)
+  if ( solution == "RLSS" && model == "GM"){
+    restricted_gmm_solution(data = data, design_matrix, ref = reference, weights=weight)
   }
-  
-  # 3) Genera la matriz A y la condiciona
-  gen_basic_matrix <- gen_design_matrix(df)
   
   IM <- as.matrix(MTX_INC$A)
   A <- as.matrix(MTX_INC$IM)

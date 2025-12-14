@@ -4,7 +4,8 @@ library(Matrix)
 setwd("G:\\Otros ordenadores\\Mi PC\\IGAC\\Codigos\\R-scripts\\PruebasAjusteGeodesico")
 
 source("gen_basic_matrix.R")
-source("GMM.R")
+source("gen_matrix_weight.R")
+source("leveling_adjustment.R")
 
 path = "G:\\Otros ordenadores\\Mi PC\\IGAC\\EsquemasPruebas\\csv\\EjercicioIGAC6.csv"
 
@@ -14,6 +15,7 @@ dfref <- data.frame(
   h = c(1346.6917,2037.5729)
 )
 
+test_weight_matrix <- gen_matrix_weight(df)
 gen_matrix_test <- gen_design_matrix(df)
 class(gen_matrix_test$design_matrix)
 

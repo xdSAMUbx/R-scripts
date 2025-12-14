@@ -1,19 +1,30 @@
-restricted_gmm_solution <- function(data, design_matrix, weights=NULL){
+restricted_gmm_solution <- function(data, ref = NULL, weights=FALSE){
   
-  # Revisiones Rapidas
+  # Revisiones
   stopifnot(inherits(design_matrix, c("Matrix","dgCMatrix")))
+  if (!is.null(weights)){
+    stopifnot(inherits(weights,c("Matrix","dgCMatrix")))
+  }
   
+  # Obtiene la matriz de diseño e incidencia
+  basic_matrix <- gen_design_matrix(data = data, ref = reference)
+  # Obtiene la matriz de pesos
+  W <- gen_matrix_weight(data = data, weight = weights, sparse = sparse)
   
-  
-  
+  # Observaciones
   L <- matrix(as.numeric(data[,3]))
-  ATP <- crossprod(A,P)
+  
+  # Matriz A
+  A <- basic_matrix$inc_matrix
+  
+  # Ecuaciones normales
+  ATP <- crossprod(A,W)
   N <- ATP%*%A
   c <- ATP%*%L
   
   # Obtiene las filas y columnas de N
-  rowN <- nrow(N)
-  colN <- ncol(N)
+  num_row_N <- nrow(N)
+  num_col_N <- ncol(N)
   
   if(!(is.null(ref))){
     # dimensiones base
@@ -21,19 +32,17 @@ restricted_gmm_solution <- function(data, design_matrix, weights=NULL){
     n_ref <- nrow(ref)       # vértices con cota conocida
     
     # Matriz K (n_par x n_ref), inicialmente ceros
-    K <- matrix(0,
-                nrow = n_par,
-                ncol = n_ref,
-                dimnames = list(colnames(A), ref[,"nom"]))
+    K <- Matrix(matrix(0, nrow = n_par, ncol = n_ref,
+                dimnames = list(colnames(A), ref[,"nom"])),sparse = TRUE)
     
     # Llenar K con 1 cuando el vértice es referencia
-    rn <- rownames(K)        # nombres de vértices (incógnitas)
-    cn <- colnames(K)        # nombres de referencias declaradas
-    comunes <- intersect(rn, cn)
-    K[cbind(match(comunes, rn), match(comunes, cn))] <- 1L
+    row_names_K <- rownames(K)        # nombres de vértices (incógnitas)
+    col_names_K <- colnames(K)        # nombres de referencias declaradas
+    comunes <- intersect(row_names_K, col_names_K)
+    K[cbind(match(comunes, row_names_K), match(comunes, col_names_K))] <- 1L
     
     # Armar matriz aumentada Nc
-    Nc <- matrix(0, nrow = n_par + n_ref, ncol = n_par + n_ref)
+    Nc <- Matrix(matrix(0, nrow = n_par + n_ref, ncol = n_par + n_ref),sparse=TRUE)
     Nc[1:n_par, 1:n_par] <- N
     Nc[1:n_par, (n_par+1):(n_par+n_ref)] <- K
     Nc[(n_par+1):(n_par+n_ref), 1:n_par] <- t(K)
