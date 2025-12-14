@@ -1,29 +1,30 @@
 library(MASS)
+library(Matrix)
 
-setwd("C:\\Users\\samuel.calderon\\Documents\\CodigoAjuste\\R")
+setwd("G:\\Otros ordenadores\\Mi PC\\IGAC\\Codigos\\R-scripts\\PruebasAjusteGeodesico")
 
-setwd("G:\\Otros ordenadores\\Mi PC\\Universidad\\8 Semestre\\Econometria\\R-scripts\\PruebasAjusteGeodesico")
-
-source("genA.R")
+source("gen_basic_matrix.R")
 source("GMM.R")
-source("CORR.R")
 
-path = "G:\\Otros ordenadores\\Mi PC\\IGAC\\EsquemasPruebas\\EjercicioGomez1.csv"
+path = "G:\\Otros ordenadores\\Mi PC\\IGAC\\EsquemasPruebas\\csv\\EjercicioIGAC6.csv"
 
-df <- read.csv(path,header = TRUE)
+df <- read.csv(path, header = TRUE, sep=";")
 dfref <- data.frame(
-  nom  = c("A"),
-  h = c(2600)
+  nom  = c("A22-CW-6","B107-CW-6"),
+  h = c(1346.6917,2037.5729)
 )
 
-GMM(data=df,Weigth = T)
-corr(data=df, Weigth = T)
- v <- P1$v
-P <- P1$P
-A <- P1$A
-K <- P1$K
-m <- qr(t(A))$rank
-l <- qr(K)$rank
-n <- nrow(A)
-r <- nrow(A) - qr(t(A))$rank + qr(K)$rank
-sigma0pred <- crossprod(v,P)%*%v/r
+gen_matrix_test <- gen_design_matrix(df)
+class(gen_matrix_test$design_matrix)
+
+GMM_1 <- GMM(data=df, weight=TRUE)
+A <- GMM_1$IM
+X <- GMM_1$x
+K <- GMM_1$K
+P <- GMM_1$P
+e <- GMM_1$v
+y_predic <- GMM_1$L_Corregida
+r <- qr(K)$rank
+crossprod(e,P)%*%e
+crossprod(X,P)%*%e
+(crossprod(y_predic,P)%*%y_predic) + crossprod(e,P)%*%e

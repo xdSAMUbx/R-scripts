@@ -1,31 +1,11 @@
-source("gen_basic_matrix.R")
-
-# Función que permite hacer el ajuste a traves del modelo de gauss - markov
-leveling_adjust <- function(data, reference=NULL, weight=FALSE, 
-                            model=c("gauss-markov","condition"),
-                            sol=c("LSS","RLSS","LSS-DCR","RLSS-DCR")){
+restricted_gmm_solution <- function(data, design_matrix, weights=NULL){
   
-  # 1) Verifica que la información este en data.frame
-  stopifnot(inherits(data,"data.frame"))
+  # Revisiones Rapidas
+  stopifnot(inherits(design_matrix, c("Matrix","dgCMatrix")))
   
-  if (!is.null(reference)){
-    stopifnot(inherits(reference, "data.frame"))
-  }
   
-  # 2) Genera la matriz de pesos según si esta en km, millas o no hay
-  # Esto para obtenerla en terminos de metros, pies o la matriz identidad
-  if (!(isTRUE(weight))){
-    W <- diag(nrow(data))
-  } else {
-    d <- as.numeric(data[,4]) # La distancia siempre en la cuarta columna
-    W <- diag(1/d)
-  }
   
-  # 3) Genera la matriz A y la condiciona
-  gen_basic_matrix <- gen_design_matrix(df)
   
-  IM <- as.matrix(MTX_INC$A)
-  A <- as.matrix(MTX_INC$IM)
   L <- matrix(as.numeric(data[,3]))
   ATP <- crossprod(A,P)
   N <- ATP%*%A
@@ -78,7 +58,7 @@ leveling_adjust <- function(data, reference=NULL, weight=FALSE,
     Cc[1:rowN,1L] <- c
     Cc[rowNc,1L] <- 0 
   }
-
+  
   # 5) Ajusta las observaciones
   x <- solve(Nc,Cc)
   Ax <- A%*%x[1:rowN]
