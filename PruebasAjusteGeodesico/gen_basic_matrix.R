@@ -1,58 +1,78 @@
-# Función que me va a permitir generar la matriz de diseño A
-gen_design_matrix <- function(data, ref = NA){
-  # Importa el paquete para manejo de matrices dispersas
-  library(Matrix)
-  
-  # 1) Validar que el data este en data.frame
-  stopifnot(inherits(data,"data.frame"))
-  
-  # 2) Valida que hallan o no ref
-  if (!all(is.na(ref))) {
-    stopifnot(inherits(ref, "data.frame"))
+library(Matrix)
+
+gen_basic_matrices <- function(data, rlss = TRUE, ref = TRUE, weight = TRUE){
+  stopifnot(inherits(data, "data.frame"))
+  if (!isTRUE(rlss) && !isTRUE(ref)) {
+    stop("Configuración inválida: rlss = FALSE y ref = FALSE no es permitido.")
   }
   
-  # 3) Valida que existe la columna ini y fin para la matriz de incidencia
-  if (!("ini" %in% names(data))) stop("Faltan los vértices de inicio de la nivelación.")
-  if (!("fin" %in% names(data))) stop("Faltan los vértices de llegada en la nivelación.")
-  if (!("obs" %in% names(data))) stop("Faltan las diferencias de altura observadas.")
-  if (!("dist" %in% names(data))) stop("Falta la distancia en los datos observados.")
+  # Verifica si el dataframe tiene vértices con referencias
+  if (isTRUE(ref)){
+    data.obs <- data[data[[5]] != "R", ]
+    data.ref <- data[data[[5]] == "R", ]
+    data.ref <- data.ref[, colSums(!is.na(data.ref)) > 0]
+  } else {
+    data.obs <- if (any(data[[5]] == "R")) {
+      data[data[[5]] != "R", ]
+    } else {
+      data
+    }
+  }
   
-  # 4) Obtiene los nodos y calcula el # de nodos y el # de aristas
-  nodos    <- sort(unique(c(data$ini, data$fin)))
-  num_nodos <- length(nodos)
-  num_aristas <- nrow(data)
+  # Crea la matriz de pesos
+  if (isTRUE(weight)){
+    d <- data.obs[[4]]
+    W <- Diagonal(x=1/d)
+  } else {
+    W <- Diagonal(x = rep(1,nrow(data.obs)))
+  }
   
-  # 5) Genera la matriz de incidencia dirigida (nodos x aristas) (v x e)
-  inc_matrix <- Matrix(matrix(0, nrow = num_nodos, ncol = num_aristas,
-               dimnames = list(nodos, paste0("x", 1:num_aristas))),sparse = TRUE)
+  # Obtiene la cantidad de nodos sin repetir así como n y m
+  nodos <- sort(unique(c(data.obs$ini,data.obs$fin)))
+  n <- nrow(data.obs)
+  m <- length(nodos)
+  # Crea la matriz de incidencia
+  inc_matrix <- Matrix(0,nrow = m, ncol = n,
+        dimnames = list(nodos, paste0("x", 1:n)), sparse = TRUE)
   
-  # Halla las posiciones donde salen y llegan los nodos
-  fila_ini <- match(data$ini, nodos)
-  fila_fin <- match(data$fin, nodos)
-  cols <- seq_len(num_aristas)
+  fila_ini <- match(data.obs$ini, nodos)
+  fila_fin <- match(data.obs$fin, nodos)
+  cols <- seq_len(n)
   
   inc_matrix[cbind(fila_ini,cols)] <- -1
   inc_matrix[cbind(fila_fin,cols)] <- 1
+  inc_matrix <- t(inc_matrix)
   
-  inc_matrix <- t(inc_matrix)   # aristas x nodos
-  
-  # 6) Si hay ref y no existe la columna nom (nomenclatura, nombre)
-  # No puede continuar
-  
-  if (!all(is.na(ref))) {
-    if (!("nom" %in% names(ref))) {
-      stop("El data.frame 'ref' debe tener la columna 'nom' con los nodos conocidos")
+  if (isTRUE(rlss)){
+    A <- inc_matrix
+    L <- Matrix(data.obs[[3]])
+    if (isTRUE(ref)) {
+      l <- nrow(data.ref)
+      # Matriz K (n_par x n_ref), inicialmente ceros
+      K <- Matrix(0, nrow = l, ncol = m, dimnames = list(data.ref[[1]], nodos),
+                  sparse = TRUE)
+      
+      # Llenar K con 1 cuando el vértice es referencia
+      K[cbind(seq_len(l), match(data.ref[[1]], nodos))] <- 1
+      K0 <- Matrix(data.ref$obs, ncol=1, dimnames = list(data.ref[[1]]), 
+                   sparse = TRUE)
+    } else {
+      K <- Matrix(rep(1,m),ncol = m,dimnames = list("[1]",nodos),sparse = TRUE)
+      K0 <- Matrix(0, nrow = 1, ncol=1, sparse = TRUE)
     }
-    nodos_fijos <- ref$nom
+    return (list(A = inc_matrix,W = W, K = K, K0 = K0, L = matrix(L)))
   } else {
-    nodos_fijos <- character(0)  # ninguno
+    A <- inc_matrix[,!colnames(inc_matrix) %in% data.ref[[1]], drop = FALSE]
+    ref_nodes <- data.ref[[1]]
+    ref_vals  <- data.ref$obs
+    
+    h_ini_ref <- ref_vals[match(data.obs$ini, ref_nodes)]
+    h_fin_ref <- ref_vals[match(data.obs$fin, ref_nodes)]
+    
+    h_ini_ref[is.na(h_ini_ref)] <- 0
+    h_fin_ref[is.na(h_fin_ref)] <- 0
+    
+    L_corr <- data.obs[[3]] + h_ini_ref - h_fin_ref
+    return (list(A = A, W = W, L = matrix(L_corr)))
   }
-  
-  # 7. Construir matriz de diseño A quitando las columnas de vertices libres de error 
-  nodos_estimar <- colnames(inc_matrix) %in% nodos_fijos
-  
-  # protección: si todas las columnas se eliminan, devolvemos matriz con 0 columnas pero
-  # seguimos manteniendo estructura de matriz
-  A <- inc_matrix[, !nodos_estimar, drop=FALSE]
-  return(list(design_matrix=A,inc_matrix=inc_matrix))
 }
